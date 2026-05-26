@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Script de monitoramento de RAID1 com LVM e notificação via Telegram.
+Script de monitoramento de RAID1 com LVM (LVM Mirror) e notificação via Telegram.
 Executa verificações de saúde do RAID a cada hora e envia alertas em caso de problemas.
+
+Este script é específico para RAID1 implementado via LVM Mirror (NÃO usa mdadm).
+No LVM, o RAID1 é criado usando segmentos do tipo "raid1" ou "mirror".
 
 Variáveis de configuração devem ser preenchidas abaixo.
 """
@@ -13,7 +16,7 @@ from datetime import datetime
 import requests
 
 # ==================== CONFIGURAÇÕES ====================
-# ID do bot do Telegram (obtido via @BotFather)
+# Token do bot do Telegram (obtido via @BotFather)
 TELEGRAM_BOT_TOKEN = "SEU_BOT_TOKEN_AQUI"
 
 # ID do chat ou usuário que receberá as notificações
@@ -29,9 +32,17 @@ LOG_LEVEL = "INFO"
 # Arquivo de log
 LOG_FILE = "/var/log/raid_monitor.log"
 
-# Dispositivo RAID para monitorar (ajuste conforme seu sistema)
-# Exemplos: /dev/md0, /dev/mapper/vg_name-lv_name
-RAID_DEVICE = "/dev/md0"
+# Nome do Volume Group (VG) que contém o LV espelhado
+# Use 'vgs' no terminal para listar os VGs disponíveis
+VOLUME_GROUP = "vg_raid"
+
+# Nome do Logical Volume (LV) espelhado (opcional, deixe vazio para verificar todos os LVs do VG)
+# Use 'lvs -o name,seg_type --select seg_type=raid1' ou 'seg_type=mirror' para identificar
+LOGICAL_VOLUME = ""  # Ex: "lv_root" ou deixe "" para verificar todos os LVs espelhados do VG
+
+# ==================== VARIÁVEIS INTERNAS ====================
+last_alert_time = {}  # Controle de spam de alertas
+ALERT_COOLDOWN = 3600  # Tempo mínimo entre alertas do mesmo tipo (em segundos)
 
 # =======================================================
 
