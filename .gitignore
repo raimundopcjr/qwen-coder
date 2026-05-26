@@ -1,0 +1,1 @@
+Nothing needs to be added to .gitignore since only a Python source file (`raid_monitor.py`) was added, which is a source code file that should be tracked in version control. No build artifacts, dependencies, or temporary files were included in the changes.
